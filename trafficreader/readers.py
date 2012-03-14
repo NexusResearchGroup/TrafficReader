@@ -9,13 +9,12 @@ def list_volumes(volumefile):
 	'''
 	Reads the binary volume counts from volumefile and returns them as a list.
 	'''
-
-	vol_array = array('b', volumefile)
 	
-	# Confirm that the array read the correct number (2880) of volume measurements
-	num_records = vol_array.buffer_info()[1]
-	if num_records != 2880:
-		raise ValueError('Volume file has length of ' + str(num_records) + ', should be 2880')
+	# Set the array to read single bytes
+	vol_array = array('b')
+	
+	# Load the array from the file. This will raise EOFError if less than 2880 records are found.
+	vol_array.fromfile(volumefile, 2880)
 	
 	return vol_array.tolist()
 
@@ -23,14 +22,11 @@ def list_occupancies(occupancyfile):
 	'''
 	Reads the binary occupancy ratios from occupancyfile and returns them as a list.
 	'''
-	occ_array = array('h', volumefile)
 	
-	# Confirm that the array read the correct number (2880) of volume measurements
-	num_records = vol_array.buffer_info()[1]
-	if num_records != 2880:
-		raise ValueError('Volume file has length of ' + str(num_records) + ', should be 2880')
+	# Set the array to read two bytes at a time
+	occ_array = array('h')
 	
-	# MnDOT example shows we need to swap byte order -- does this depend on host OS?
-	occ_array.byteswap()
+	# Load the array from the file. This will raise EOFError if less than 2880 records are found.
+	occ_array.fromfile(occupancyfile, 2880)
 	
-	return vol_array.tolist()
+	return occ_array.tolist()
