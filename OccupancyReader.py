@@ -1,7 +1,7 @@
 '''
 Created on Mar 8, 2012
 
-@author: owenx148
+@author: owenam
 '''
 
 class OccupancyReader():
