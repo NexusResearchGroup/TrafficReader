@@ -14,4 +14,9 @@ class OccupancyReader():
         '''
         Constructor
         '''
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+
 if __name__ == '__main__':
