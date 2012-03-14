@@ -1,5 +1,1 @@
-import OccupancyReader
-import VolumeReader
-
-class TrafficReader:
-    
+from readers import list_occupancies, list_volumes
