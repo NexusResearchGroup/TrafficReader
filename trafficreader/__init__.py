@@ -1,6 +1,7 @@
 from readers import list_occupancies, list_volumes
 from zipfile import ZipFile
 from os import path
+from __future__ import division
 
 class TrafficReader:
 	'''

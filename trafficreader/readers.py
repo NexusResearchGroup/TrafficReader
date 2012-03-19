@@ -4,6 +4,7 @@ Created on Mar 14, 2012
 @author: owenam
 '''
 from struct import unpack
+from __future__ import division
 
 def list_volumes(volumefile):
 	'''
