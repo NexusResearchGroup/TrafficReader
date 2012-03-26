@@ -148,6 +148,8 @@ class TrafficReader:
 		
 		average_length = sum(valid_lengths) / len(valid_lengths)
 
+		return (average_length, lengths)
+		
 	def free_flow_speed(self, volumes, occupancies, field_length):
 		'''
 		Returns the free-flow speed calculated from the given conditions by looking at times where the occupancy is less than 10%
