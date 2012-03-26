@@ -31,5 +31,7 @@ def list_occupancies(occupancyfile):
 	for i in range(len(occ_list)):
 		if occ_list[i] < 0 or occ_list[i] > 1800:
 			occ_list[i] = -1
+		else:
+			occ_list[i] = occ_list[i] / 1800
 	
 	return occ_list
