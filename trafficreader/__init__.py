@@ -2,6 +2,7 @@ from __future__ import division
 from readers import list_occupancies, list_volumes
 from zipfile import ZipFile
 from os import path
+from math import exp
 
 class TrafficReader:
 	'''
@@ -51,7 +52,6 @@ class TrafficReader:
 		name = str(detectorID) + '.c30'
 		occ_file = self._zipfile.open(name)
 		return list_occupancies(occ_file)
-		
 		
 	def volumes_for_detector(self, detectorID):
 		'''
