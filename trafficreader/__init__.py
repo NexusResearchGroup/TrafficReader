@@ -62,35 +62,37 @@ class TrafficReader:
 		vol_file = self._zipfile.open(name)
 		return list_volumes(vol_file)
 	
-	def 1m_volumes_for_detector(detectorID):
+	def onemin_volumes_for_detector(self, detectorID):
 		'''
 		Returns a list of 1-minute volume values, one for each minute of the day, starting at 00:00. If both applicable 30-second volumes are valid, they are added together. If one or both 30-second volumes are missing, -1 is reported for that time slot. 
 		'''
 		
-		30s_volumes = self.volumes_for_detector(detectorID)
-		1m_volumes = []
+		volumes_30s = self.volumes_for_detector(detectorID)
+		volumes_1m = []
 		
-		for i in range(0, len(30s_volumes), 2):
-			if 30s_volumes[i] == -1 or 30s_volumes[i+1] == -1:
-				1m_volumes.append(-1)
+		for i in range(0, len(volumes_30s), 2):
+			if volumes_30s[i] == -1 or volumes_30s[i+1] == -1:
+				volumes_1m.append(-1)
 			else:
-				1m_volumes.append(30s_volumes[i] + 30s_volumes[i+1])
+				volumes_1m.append(volumes_30s[i] + volumes_30s[i+1])
 		
-		return 1m_volumes
+		return volumes_1m
 		
-	def 1m_occupancies_for_detector(detectorID):
+	def onemin_occupancies_for_detector(self, detectorID):
 		'''
 		Returns a list of 1-minute occupancy ratios, one for each minute of the day, starting at 00:00. If both applicable 30-second occupancies are valud, they are averaged together. If one or both 30-second occupancies are missing, -1 is reported for that time slow.
 		'''
 		
-		30s_occupancies = self.occupancies_for_detector(detectorID)
-		1m_occupancies = []
+		occupancies_30s = self.occupancies_for_detector(detectorID)
+		occupancies_1m = []
 		
-		for i in range(0, len(30s_occupancies), 2):
-			if 30s_occupancies[i] == -1 or 30s_occupancies[i+1] == -1:
-				1m_occupancies.append(-1)
+		for i in range(0, len(occupancies_30s), 2):
+			if occupancies_30s[i] == -1 or occupancies_30s[i+1] == -1:
+				occupancies_1m.append(-1)
 			else:
-				1m_occupancies.append((30s_occupancies[i] + 30s_occupancies[i+1]) / 2)
+				occupancies_1m.append((occupancies_30s[i] + occupancies_30s[i+1]) / 2)
+				
+		return occupancies_1m
 	
 	def onemin_speeds_for_detector(self, detectorID, speed_limit=70):
 		'''
