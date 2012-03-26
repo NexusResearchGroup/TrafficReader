@@ -148,5 +148,21 @@ class TrafficReader:
 		
 		average_length = sum(valid_lengths) / len(valid_lengths)
 
+	def free_flow_speed(self, volumes, occupancies, field_length):
+		'''
+		Returns the free-flow speed calculated from the given conditions by looking at times where the occupancy is less than 10%
+		'''
 		
+		# given in published report
+		max_occupancy = 0.98
+		max_density = (max_occupancy * 5280) / field_length
 		
+		valid_volumes = []
+		valid_densities = []
+		for i in range(len(occupancies)):
+			if 0 <= occupancies[i] < 0.1:
+				density = (occupancies[i] * 5280) / field_length
+				valid_densities.append(density - ((density ** 2) / max_density))
+				valid_volumes.append(volumes[i])
+		
+		return (60 * sum(valid_volumes)) / sum(valid_densities)
