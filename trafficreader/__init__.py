@@ -146,7 +146,11 @@ class TrafficReader:
 			if not (lengths[i] == -1 or lengths[i] == -2):
 				valid_lengths.append(lengths[i])
 		
-		average_length = sum(valid_lengths) / len(valid_lengths)
+		# if there are no valid lengths, return average length of -1.
+		if len(valid_lengths) != 0:
+			average_length = sum(valid_lengths) / len(valid_lengths)
+		else:
+			average_length = -1
 
 		return (average_length, lengths)
 		
