@@ -104,13 +104,15 @@ class TrafficReader:
 		avg_field_length, field_lengths = self.field_lengths(vols, occs, speed_limit)
 		free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
 		
+		
+		
 		speeds = []
 		
 		# given in published report
 		theta = 0.15
 		
 		for i in range(len(occs)):
-			if occs[i] < 0:
+			if occs[i] < 0 or free_flow_speed == -1 or avg_field_length == -1:
 				speeds.append(-1)
 			elif 0 < occs[i] < 0.1:
 				speeds.append(free_flow_speed * (1 - ( (occs[i] * avg_field_length) / field_lengths[i]) ) )
@@ -170,5 +172,9 @@ class TrafficReader:
 				density = (occupancies[i] * 5280) / field_length
 				valid_densities.append(density - ((density ** 2) / max_density))
 				valid_volumes.append(volumes[i])
-		
+				
+		# if there are not valid volumes or densities, return ffs of -1
+		if sum(valid_volumes) == 0 or sum(valid_densities) == 0:
+			return -1
+
 		return (60 * sum(valid_volumes)) / sum(valid_densities)
