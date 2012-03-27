@@ -179,7 +179,7 @@ class TrafficReader:
 
 		return (60 * sum(valid_volumes)) / sum(valid_densities)
 
-	def print_average_speeds_for_detectors(start=0, end=7000):
+	def print_average_speeds_for_detectors(self, start=0, end=7000):
 		for d in range(start, end):
 			try:
 				speedlist = tr.onemin_speeds_for_detector(d)
