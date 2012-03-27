@@ -180,14 +180,15 @@ class TrafficReader:
 		return (60 * sum(valid_volumes)) / sum(valid_densities)
 
 	def print_average_speeds_for_detectors(self, start=0, end=7000):
+		avgspeedlist = []
 		for d in range(start, end):
 			try:
-				speedlist = tr.onemin_speeds_for_detector(d)
+				speedlist = self.onemin_speeds_for_detector(d)
 			except KeyError:
 				print "No data for detector " + str(d)
 				continue
 				
-			for invalid in speedlist.count(-1):
+			for invalid in range(speedlist.count(-1)):
 				speedlist.remove(-1)
 				
 			speedsum = sum(speedlist)
@@ -196,4 +197,8 @@ class TrafficReader:
 			if speedsum == 0 or speedcount == 0:
 				print "Average speed for detector " + str(d) + ": 0"
 			else:
-				print "Average speed for detector " + str(d) + ": " + str(speedsum / speedcount)
+				avgspeed = speedsum/speedcount
+				print "Average speed for detector " + str(d) + ": " + str(avgspeed)
+				avgspeedlist.append(avgspeed)
+				
+		print "Overall average: " + str(sum(avgspeedlist) / len(avgspeedlist))
