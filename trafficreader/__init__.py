@@ -115,6 +115,25 @@ class TrafficReader:
 				speeds.append(free_flow_speed * (1 - theta) * exp(exponent) )
 		
 		return speeds
+		
+	def fivemin_speeds_for_detector(self, detectorID, speed_limit=70):
+		'''
+		Returns a list of 5-minute speeds
+		'''
+		
+		speeds1m = self.onemin_speeds_for_detector(detectorID)
+		
+		speeds5m = []
+		
+		for i in range(0, len(speeds1m), 5):
+			interval_speeds = speeds1m[i:i+4]
+			# if any of the speeds in this interval are -1, the whole interval gets -1
+			if interval_speeds.count(-1) > 0:
+				speeds5m.append(-1)
+			else:
+				speeds5m.append(sum(interval_speeds) / len(interval_speeds))
+		
+		return speeds5m
 	
 	def field_lengths(self, volumes, occupancies, speed_limit=70):
 		'''
@@ -170,7 +189,7 @@ class TrafficReader:
 		avgspeedlist = []
 		for d in range(start, end):
 			try:
-				speedlist = self.onemin_speeds_for_detector(d)
+				speedlist = self.fivemin_speeds_for_detector(d)
 			except KeyError:
 				print "No data for detector " + str(d)
 				continue
