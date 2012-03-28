@@ -74,7 +74,7 @@ class TrafficReader:
 		'''
 		
 		volume30s = self.volumes_for_detector(detectorID)
-		occupancy30s = self.volumes_for_detector(detectorID)
+		occupancy30s = self.occupancies_for_detector(detectorID)
 		
 		volume1m = []
 		occupancy1m = []
@@ -85,7 +85,7 @@ class TrafficReader:
 				occupancy1m.append(-1)
 			else:
 				volume1m.append(volume30s[i] + volume30s[i+1])
-				occupancy1m.append((occupancies_30s[i] + occupancies_30s[i+1]) / 2)
+				occupancy1m.append((occupancy30s[i] + occupancy30s[i+1]) / 2)
 		
 		return volume1m, occupancy1m
 
