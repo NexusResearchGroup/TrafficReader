@@ -94,13 +94,10 @@ class TrafficReader:
 		Returns a list of 1-minute speeds, one for each minute of the day, starting at 00:00.
 		'''
 		
-		vols = self.onemin_volumes_for_detector(detectorID)
-		occs = self.onemin_occupancies_for_detector(detectorID)
+		vols, occs = self.onemin_data_for_detector(detectorID)
 		avg_field_length, field_lengths = self.field_lengths(vols, occs, speed_limit)
 		free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
-		
-		
-		
+				
 		speeds = []
 		
 		# given in published report
