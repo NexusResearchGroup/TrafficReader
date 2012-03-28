@@ -115,30 +115,24 @@ class TrafficReader:
 				speeds.append(free_flow_speed * (1 - theta) * exp(exponent) )
 		
 		return speeds
-				
+	
 	def field_lengths(self, volumes, occupancies, speed_limit=70):
 		'''
 		Given a list of volumes, a list of corresponding occupancies, and a speed limit, returns overall average effective field length of the detector.
 		'''
 		
 		lengths = []
-		
-		for i in range(len(volumes)):
-			if 0 <= occupancies[i] < 0.1:
-				if volumes[i] == 0 or occupancies[i] == 0:
-					lengths.append(-1)
-				elif occupancies[i] >= 0.1:
-					lengths.append(-2)
-				else:
-					lengths.append( (speed_limit * occupancies[i] * 5280) / (volumes[i] * 60) )
-			else:
-				lengths.append(-1)
-		
 		valid_lengths = []
 		
-		for i in range(len(lengths)):
-			if not (lengths[i] == -1 or lengths[i] == -2):
-				valid_lengths.append(lengths[i])
+		for i in range(len(volumes)):
+			if volumes[i] <= 0 or occupancies[i] <= 0:
+				lengths.append(-1)
+			elif occupancies[i] <= 0.1:
+				length = (speed_limit * occupancies[i] * 5280) / (volumes[i] * 60)
+				lengths.append(length)
+				valid_lengths.append(length)
+			else:
+				lengths.append(-2)
 		
 		# if there are no valid lengths, return average length of -1.
 		if len(valid_lengths) != 0:
@@ -146,7 +140,7 @@ class TrafficReader:
 		else:
 			average_length = -1
 
-		return (average_length, lengths)
+		return average_length, lengths
 		
 	def free_flow_speed(self, volumes, occupancies, field_length):
 		'''
@@ -159,8 +153,9 @@ class TrafficReader:
 		
 		valid_volumes = []
 		valid_densities = []
+		
 		for i in range(len(occupancies)):
-			if 0 <= occupancies[i] < 0.1:
+			if 0 < occupancies[i] < 0.1 and volumes[i] > 0:
 				density = (occupancies[i] * 5280) / field_length
 				valid_densities.append(density - ((density ** 2) / max_density))
 				valid_volumes.append(volumes[i])
