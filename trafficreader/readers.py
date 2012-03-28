@@ -27,7 +27,7 @@ def list_occupancies(occupancyfile):
 	format = '>' + ('h' * 2880)
 	occ_list = list(unpack(format, occupancyfile.read()))
 	
-	# Valid sample ranges for occupancies are 0 - 1800. If outside this range, set to -1 to indicate bad data.
+	# Valid sample ranges for occupancies are 0 - 1800. If outside this range, set to -1 to indicate bad data. Return valid data as a ratio of 1800. s
 	for i in range(len(occ_list)):
 		if occ_list[i] < 0 or occ_list[i] > 1800:
 			occ_list[i] = -1

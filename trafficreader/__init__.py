@@ -62,6 +62,33 @@ class TrafficReader:
 		vol_file = self._zipfile.open(name)
 		return list_volumes(vol_file)
 	
+	def onemin_data_for_detector(self, detectorID):
+		'''
+		Returns a tuple (vol_list, occ_list) where vol_list is volume data at 1-minute increments and occ_list is occupancy data at 1-minute increments.
+		
+		For each 1-minute interval, consider four values:
+			- vol(i), vol(i+1)
+			- occ(i), occ(i+1)
+			
+		All four values must be valid (that is, != -1). If any one of these values is invalid, both volume and occupancy for time slot i is reported as invalid.
+		'''
+		
+		volume30s = self.volumes_for_detector(detectorID)
+		occupancy30s = self.volumes_for_detector(detectorID)
+		
+		volume1m = []
+		occupancy1m = []
+		
+		for i in range(0, len(volume30s), 2):
+			if volume30s[i] == -1 or volume30s[i+1] == -1 or occupancy30s[i] == -1 or occupancy30s[i+1] == -1:
+				volume1m.append(-1)
+				occupancy1m.append(-1)
+			else:
+				volume1m.append(volume30s[i] + volume30s[i+1])
+				occupancy1m.append((occupancies_30s[i] + occupancies_30s[i+1]) / 2)
+		
+		return volume1m, occupancy1m
+		
 	def onemin_volumes_for_detector(self, detectorID):
 		'''
 		Returns a list of 1-minute volume values, one for each minute of the day, starting at 00:00. If both applicable 30-second volumes are valid, they are added together. If one or both 30-second volumes are missing, -1 is reported for that time slot. 
