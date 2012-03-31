@@ -50,8 +50,11 @@ class TrafficReader:
 		'''
 		
 		name = str(detectorID) + '.c30'
-		occ_file = self._zipfile.open(name)
-		return list_occupancies(occ_file)
+		try:
+			occ_file = self._zipfile.open(name)
+			return list_occupancies(occ_file)
+		except KeyError:
+			return [-1] * 2880
 		
 	def volumes_for_detector(self, detectorID):
 		'''
@@ -59,8 +62,11 @@ class TrafficReader:
 		'''
 		
 		name = str(detectorID) + '.v30'
-		vol_file = self._zipfile.open(name)
-		return list_volumes(vol_file)
+		try:
+			vol_file = self._zipfile.open(name)
+			return list_volumes(vol_file)
+		except KeyError:
+			return [-1] * 2880
 	
 	def onemin_data_for_detector(self, detectorID):
 		'''
