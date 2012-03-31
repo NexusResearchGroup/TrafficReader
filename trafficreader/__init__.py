@@ -95,13 +95,17 @@ class TrafficReader:
 		
 		return volume1m, occupancy1m
 
-	def onemin_speeds_for_detector(self, detectorID, speed_limit=70):
+	def onemin_speeds_for_detector(self, detectorID, speed_limit=70, field_length=None):
 		'''
 		Returns a list of 1-minute speeds, one for each minute of the day, starting at 00:00.
 		'''
 		
 		vols, occs = self.onemin_data_for_detector(detectorID)
-		avg_field_length, field_lengths = self.field_lengths(vols, occs, speed_limit)
+		if field_length == None:
+			avg_field_length, field_lengths = self.field_lengths(vols, occs, speed_limit)
+		else:
+			avg_field_length = field_length
+			field_lengths = [field_length] * 1440
 		free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
 				
 		speeds = []
