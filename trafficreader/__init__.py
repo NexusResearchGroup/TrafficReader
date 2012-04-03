@@ -54,7 +54,7 @@ class TrafficReader:
 			occ_file = self._zipfile.open(name)
 			return list_occupancies(occ_file)
 		except KeyError:
-			return [-1] * 2880
+			return [None] * 2880
 		
 	def volumes_for_detector(self, detectorID):
 		'''
@@ -66,7 +66,7 @@ class TrafficReader:
 			vol_file = self._zipfile.open(name)
 			return list_volumes(vol_file)
 		except KeyError:
-			return [-1] * 2880
+			return [None] * 2880
 	
 	def onemin_data_for_detector(self, detectorID):
 		'''
@@ -76,7 +76,7 @@ class TrafficReader:
 			- vol(i), vol(i+1)
 			- occ(i), occ(i+1)
 			
-		All four values must be valid (that is, != -1). If any one of these values is invalid, both volume and occupancy for time slot i is reported as invalid.
+		All four values must be valid (that is, != None). If any one of these values is invalid, both volume and occupancy for time slot i is reported as invalid.
 		'''
 		
 		volume30s = self.volumes_for_detector(detectorID)
@@ -86,9 +86,9 @@ class TrafficReader:
 		occupancy1m = []
 		
 		for i in range(0, len(volume30s), 2):
-			if volume30s[i] == -1 or volume30s[i+1] == -1 or occupancy30s[i] == -1 or occupancy30s[i+1] == -1:
-				volume1m.append(-1)
-				occupancy1m.append(-1)
+			if volume30s[i] == None or volume30s[i+1] == None or occupancy30s[i] == None or occupancy30s[i+1] == None:
+				volume1m.append(None)
+				occupancy1m.append(None)
 			else:
 				volume1m.append(volume30s[i] + volume30s[i+1])
 				occupancy1m.append((occupancy30s[i] + occupancy30s[i+1]) / 2)
@@ -101,12 +101,21 @@ class TrafficReader:
 		'''
 		
 		vols, occs = self.onemin_data_for_detector(detectorID)
+		
 		if field_length == None:
+		# if we were not given a field length, try to calculate from volume and occupancy
 			avg_field_length, field_lengths = self.field_lengths(vols, occs, speed_limit)
 		else:
+		# if we were given a field length, use it
 			avg_field_length = field_length
 			field_lengths = [field_length] * 1440
-		free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
+			
+		if avg_field_length == None:
+		# if we were not given a field length and we are unable to calculate it, use the speed limit as the free-flow speed
+			free_flow_speed = speed_limit
+		else:
+		# otherwise, calculate the free-flow speed from the volume, occupancy, and field length
+			free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
 				
 		speeds = []
 		
@@ -114,8 +123,8 @@ class TrafficReader:
 		theta = 0.15
 		
 		for i in range(len(occs)):
-			if occs[i] < 0 or free_flow_speed == -1 or avg_field_length == -1:
-				speeds.append(-1)
+			if occs[i] == None or free_flow_speed == None or avg_field_length == None:
+				speeds.append(None)
 			elif 0 < occs[i] < 0.1:
 				speeds.append(free_flow_speed * (1 - ( (occs[i] * avg_field_length) / field_lengths[i]) ) )
 			elif 0.1 <= occs[i] <= 0.15:
@@ -137,9 +146,9 @@ class TrafficReader:
 		
 		for i in range(0, len(speeds1m), 5):
 			interval_speeds = speeds1m[i:i+4]
-			# if any of the speeds in this interval are -1, the whole interval gets -1
-			if interval_speeds.count(-1) > 0:
-				speeds5m.append(-1)
+			# if any of the speeds in this interval are None, the whole interval gets None
+			if interval_speeds.count(None) > 0:
+				speeds5m.append(None)
 			else:
 				speeds5m.append(sum(interval_speeds) / len(interval_speeds))
 		
@@ -154,20 +163,18 @@ class TrafficReader:
 		valid_lengths = []
 		
 		for i in range(len(volumes)):
-			if volumes[i] <= 0 or occupancies[i] <= 0:
-				lengths.append(-1)
-			elif occupancies[i] <= 0.1:
+			if 0 < occupancies[i] <= 0.1 and volumes[i] != None:
 				length = (speed_limit * occupancies[i] * 5280) / (volumes[i] * 60)
 				lengths.append(length)
 				valid_lengths.append(length)
 			else:
-				lengths.append(-2)
+				lengths.append(None)
 		
-		# if there are no valid lengths, return average length of -1.
+		# if there are no valid lengths, return average length of None.
 		if len(valid_lengths) != 0:
 			average_length = sum(valid_lengths) / len(valid_lengths)
 		else:
-			average_length = -1
+			average_length = None
 
 		return average_length, lengths
 		
@@ -189,9 +196,9 @@ class TrafficReader:
 				valid_densities.append(density - ((density ** 2) / max_density))
 				valid_volumes.append(volumes[i])
 				
-		# if there are not valid volumes or densities, return ffs of -1
+		# if there are not valid volumes or densities, return ffs of None
 		if sum(valid_volumes) == 0 or sum(valid_densities) == 0:
-			return -1
+			return None
 
 		return (60 * sum(valid_volumes)) / sum(valid_densities)
 
@@ -204,9 +211,8 @@ class TrafficReader:
 				print "No data for detector " + str(d)
 				continue
 				
-			for invalid in range(speedlist.count(-1)):
-				speedlist.remove(-1)
-				
+			speedlist = [speed for speed in speedlist if speed != None]
+			
 			speedsum = sum(speedlist)
 			speedcount = len(speedlist)
 			
