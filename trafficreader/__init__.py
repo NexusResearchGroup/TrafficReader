@@ -123,7 +123,7 @@ class TrafficReader:
 		theta = 0.15
 		
 		for i in range(len(occs)):
-			if occs[i] == None or free_flow_speed == None or avg_field_length == None:
+			if occs[i] == None or free_flow_speed == None or avg_field_length == None or field_lengths[i] == None:
 				speeds.append(None)
 			elif 0 < occs[i] < 0.1:
 				speeds.append(free_flow_speed * (1 - ( (occs[i] * avg_field_length) / field_lengths[i]) ) )
@@ -163,7 +163,7 @@ class TrafficReader:
 		valid_lengths = []
 		
 		for i in range(len(volumes)):
-			if 0 < occupancies[i] <= 0.1 and volumes[i] != None:
+			if 0 < occupancies[i] <= 0.1 and volumes[i] != None and volumes[i] != 0:
 				length = (speed_limit * occupancies[i] * 5280) / (volumes[i] * 60)
 				lengths.append(length)
 				valid_lengths.append(length)
