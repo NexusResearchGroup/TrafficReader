@@ -3,6 +3,7 @@ from readers import list_occupancies, list_volumes
 from zipfile import ZipFile
 from os import path
 from math import exp
+from collections import deque
 
 class TrafficReader:
 	'''
@@ -82,8 +83,8 @@ class TrafficReader:
 		volume30s = self.volumes_for_detector(detectorID)
 		occupancy30s = self.occupancies_for_detector(detectorID)
 		
-		volume1m = []
-		occupancy1m = []
+		volume1m = deque()
+		occupancy1m = deque()
 		
 		for i in range(0, len(volume30s), 2):
 			if volume30s[i] == None or volume30s[i+1] == None or occupancy30s[i] == None or occupancy30s[i+1] == None:
@@ -93,7 +94,7 @@ class TrafficReader:
 				volume1m.append(volume30s[i] + volume30s[i+1])
 				occupancy1m.append((occupancy30s[i] + occupancy30s[i+1]) / 2)
 		
-		return volume1m, occupancy1m
+		return list(volume1m), list(occupancy1m)
 
 	def onemin_speeds_for_detector(self, detectorID, speed_limit=70, field_length=None):
 		'''
@@ -117,7 +118,7 @@ class TrafficReader:
 		# otherwise, calculate the free-flow speed from the volume, occupancy, and field length
 			free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
 				
-		speeds = []
+		speeds = deque()
 		
 		# given in published report
 		theta = 0.15
@@ -133,7 +134,7 @@ class TrafficReader:
 				exponent = -1 * (1 / theta) * ((100 * occs[i]) / (100 - theta))
 				speeds.append(free_flow_speed * (1 - theta) * exp(exponent) )
 		
-		return speeds
+		return list(speeds)
 		
 	def fivemin_speeds_for_detector(self, detectorID, speed_limit=70):
 		'''
@@ -142,7 +143,7 @@ class TrafficReader:
 		
 		speeds1m = self.onemin_speeds_for_detector(detectorID)
 		
-		speeds5m = []
+		speeds5m = deque()
 		
 		for i in range(0, len(speeds1m), 5):
 			interval_speeds = speeds1m[i:i+4]
@@ -152,15 +153,15 @@ class TrafficReader:
 			else:
 				speeds5m.append(sum(interval_speeds) / len(interval_speeds))
 		
-		return speeds5m
+		return list(speeds5m)
 	
 	def field_lengths(self, volumes, occupancies, speed_limit=70):
 		'''
 		Given a list of volumes, a list of corresponding occupancies, and a speed limit, returns overall average effective field length of the detector.
 		'''
 		
-		lengths = []
-		valid_lengths = []
+		lengths = deque()
+		valid_lengths = deque()
 		
 		for i in range(len(volumes)):
 			if 0 < occupancies[i] <= 0.1 and volumes[i] != None and volumes[i] != 0:
@@ -176,7 +177,7 @@ class TrafficReader:
 		else:
 			average_length = None
 
-		return average_length, lengths
+		return average_length, list(lengths)
 		
 	def free_flow_speed(self, volumes, occupancies, field_length):
 		'''
@@ -187,8 +188,8 @@ class TrafficReader:
 		max_occupancy = 0.98
 		max_density = (max_occupancy * 5280) / field_length
 		
-		valid_volumes = []
-		valid_densities = []
+		valid_volumes = deque()
+		valid_densities = deque()
 		
 		for i in range(len(occupancies)):
 			if 0 < occupancies[i] < 0.1 and volumes[i] > 0:
