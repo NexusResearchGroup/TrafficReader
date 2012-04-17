@@ -10,7 +10,7 @@ def list_volumes(volumefile):
 	format = 'b' * 2880
 
 	try:
-		vol_list = list(struckt.unpack(format, volumefile.read()))
+		vol_list = list(struct.unpack(format, volumefile.read()))
 	# catch files with invalid lengths
 	except struct.error:
 		vol_list = [-1] * 2880
