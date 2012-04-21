@@ -12,7 +12,8 @@ class TrafficReader:
 
 	def __init__(self, trafficfile=None):
 		'''
-		Returns a new TrafficReader, optionally initialized with a specified .traffic file
+		Returns a new TrafficReader, optionally initialized with a specified
+		.traffic file
 		'''
 
 		if trafficfile != None:
@@ -20,7 +21,8 @@ class TrafficReader:
 
 	def loadfile(self, trafficfile):
 		'''
-		Instructs a TrafficReader instance to load values from the specified .traffic file
+		Instructs a TrafficReader instance to load values from the specified
+		.traffic file
 		'''
 
 		self._trafficfile = trafficfile
@@ -29,7 +31,8 @@ class TrafficReader:
 
 	def list_detectors(self):
 		'''
-		Returns a list of the IDs of all detectors which have records in the current .traffic file
+		Returns a list of the IDs of all detectors which have records in the
+		current .traffic file
 		'''
 
 		zipfile = ZipFile(self._trafficfile)
@@ -45,7 +48,8 @@ class TrafficReader:
 
 	def occupancies_for_detector(self, detectorID):
 		'''
-		Returns a list of the 30-second occupancy values recorded in this .traffic file for the detector with the specified ID.
+		Returns a list of the 30-second occupancy values recorded in this
+		.traffic file for the detector with the specified ID.
 		'''
 
 		name = str(detectorID) + '.c30'
@@ -57,7 +61,8 @@ class TrafficReader:
 
 	def volumes_for_detector(self, detectorID):
 		'''
-		Returns a list of the 30-second volume values recorded in this .traffic file for the detector with the specified ID.
+		Returns a list of the 30-second volume values recorded in this .traffic
+		file for the detector with the specified ID.
 		'''
 
 		name = str(detectorID) + '.v30'
@@ -69,13 +74,17 @@ class TrafficReader:
 
 	def onemin_data_for_detector(self, detectorID):
 		'''
-		Returns a tuple (vol_list, occ_list) where vol_list is volume data at 1-minute increments and occ_list is occupancy data at 1-minute increments.
+		Returns a tuple (vol_list, occ_list) where vol_list is volume data at
+		1-minute increments and occ_list is occupancy data at 1-minute
+		increments.
 
 		For each 1-minute interval, consider four values:
 			- vol(i), vol(i+1)
 			- occ(i), occ(i+1)
 
-		All four values must be valid (that is, != None). If any one of these values is invalid, both volume and occupancy for time slot i is reported as invalid.
+		All four values must be valid (that is, != None). If any one of these
+		values is invalid, both volume and occupancy for time slot i is
+		reported as invalid.
 		'''
 
 		volume30s = self.volumes_for_detector(detectorID)
@@ -85,7 +94,10 @@ class TrafficReader:
 		occupancy1m = deque()
 
 		for i in range(0, len(volume30s), 2):
-			if volume30s[i] == None or volume30s[i+1] == None or occupancy30s[i] == None or occupancy30s[i+1] == None:
+			if (volume30s[i] == None
+				or volume30s[i+1] == None
+				or occupancy30s[i] == None
+				or occupancy30s[i+1] == None):
 				volume1m.append(None)
 				occupancy1m.append(None)
 			else:
@@ -94,26 +106,32 @@ class TrafficReader:
 
 		return list(volume1m), list(occupancy1m)
 
-	def onemin_speeds_for_detector(self, detectorID, speed_limit=70, field_length=None):
+	def onemin_speeds_for_detector(self, detectorID, speed_limit=70,
+								   field_length=None):
 		'''
-		Returns a list of 1-minute speeds, one for each minute of the day, starting at 00:00.
+		Returns a list of 1-minute speeds, one for each minute of the day,
+		starting at 00:00.
 		'''
 
 		vols, occs = self.onemin_data_for_detector(detectorID)
 
 		if field_length == None:
-		# if we were not given a field length, try to calculate from volume and occupancy
-			avg_field_length, field_lengths = self.field_lengths(vols, occs, speed_limit)
+		# if we were not given a field length, try to calculate from volume and
+		# occupancy
+			avg_field_length, field_lengths = self.field_lengths(vols, occs,
+																 speed_limit)
 		else:
 		# if we were given a field length, use it
 			avg_field_length = field_length
 			field_lengths = [field_length] * 1440
 
 		if avg_field_length == None:
-		# if we were not given a field length and we are unable to calculate it, use the speed limit as the free-flow speed
+		# if we were not given a field length and we are unable to calculate it,
+		# use the speed limit as the free-flow speed
 			free_flow_speed = speed_limit
 		else:
-		# otherwise, calculate the free-flow speed from the volume, occupancy, and field length
+		# otherwise, calculate the free-flow speed from the volume, occupancy,
+		# and field length
 			free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
 
 		speeds = deque()
@@ -122,7 +140,10 @@ class TrafficReader:
 		theta = 0.15
 
 		for i in range(len(occs)):
-			if occs[i] == None or free_flow_speed == None or avg_field_length == None or field_lengths[i] == None:
+			if (occs[i] == None
+				or free_flow_speed == None
+				or avg_field_length == None
+				or field_lengths[i] == None):
 				speeds.append(None)
 			elif 0 < occs[i] < 0.1:
 				speeds.append(free_flow_speed * (1 - ( (occs[i] * avg_field_length) / field_lengths[i]) ) )
@@ -145,7 +166,8 @@ class TrafficReader:
 
 		for i in range(0, len(speeds1m), 5):
 			interval_speeds = speeds1m[i:i+4]
-			# if any of the speeds in this interval are None, the whole interval gets None
+			# if any of the speeds in this interval are None, the whole interval
+			# gets None
 			if interval_speeds.count(None) > 0:
 				speeds5m.append(None)
 			else:
@@ -155,7 +177,8 @@ class TrafficReader:
 
 	def field_lengths(self, volumes, occupancies, speed_limit=70):
 		'''
-		Given a list of volumes, a list of corresponding occupancies, and a speed limit, returns overall average effective field length of the detector.
+		Given a list of volumes, a list of corresponding occupancies, and a
+		speed limit, returns overall average effective field length of the detector.
 		'''
 
 		lengths = deque()
@@ -179,7 +202,8 @@ class TrafficReader:
 
 	def free_flow_speed(self, volumes, occupancies, field_length):
 		'''
-		Returns the free-flow speed calculated from the given conditions by looking at times where the occupancy is less than 10%
+		Returns the free-flow speed calculated from the given conditions by
+		looking at times where the occupancy is less than 10%
 		'''
 
 		# given in published report
