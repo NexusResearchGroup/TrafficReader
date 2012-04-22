@@ -16,6 +16,7 @@ class TrafficReader:
 		.traffic file
 		'''
 
+		self._zipfile = None
 		if trafficfile != None:
 			self.loadfile(trafficfile)
 
