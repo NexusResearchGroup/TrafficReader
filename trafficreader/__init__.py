@@ -25,6 +25,10 @@ class TrafficReader:
 		.traffic file
 		'''
 
+		# if there was a file open, close it
+		if self._zipfile != None:
+			self._zipifile.close()
+
 		self._trafficfile = trafficfile
 		self._zipfile = ZipFile(self._trafficfile)
 		self.directory = path.dirname(trafficfile)
