@@ -44,7 +44,7 @@ def list_occupancies(occupancyfile):
 	# set to None to indicate bad data. Return valid data as a ratio of 1800.
 	bad_mask = (occ_array < 0) | (occ_array > 1800)
 	occ_array[bad_mask] = NAN
-	return occ_array
+	return occ_array / 1800
 
 if __name__ == '__main__':
 	occ_file = open('test/1234.c30')

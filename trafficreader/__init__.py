@@ -4,6 +4,7 @@ from zipfile import ZipFile
 from os import path
 from math import exp
 from collections import deque
+from numpy import *
 
 class TrafficReader:
 	'''
@@ -53,7 +54,7 @@ class TrafficReader:
 
 	def occupancies_for_detector(self, detectorID):
 		'''
-		Returns a list of the 30-second occupancy values recorded in this
+		Returns a numpy.array of the 30-second occupancy values recorded in this
 		.traffic file for the detector with the specified ID.
 		'''
 
@@ -62,12 +63,12 @@ class TrafficReader:
 			occ_file = self._zipfile.open(name)
 			return list_occupancies(occ_file)
 		except KeyError:
-			return [None] * 2880
+			return array([NAN] * 2880)
 
 	def volumes_for_detector(self, detectorID):
 		'''
-		Returns a list of the 30-second volume values recorded in this .traffic
-		file for the detector with the specified ID.
+		Returns a numpy.array of the 30-second volume values recorded in this
+		.traffic file for the detector with the specified ID.
 		'''
 
 		name = str(detectorID) + '.v30'
@@ -75,19 +76,19 @@ class TrafficReader:
 			vol_file = self._zipfile.open(name)
 			return list_volumes(vol_file)
 		except KeyError:
-			return [None] * 2880
+			return array([NAN] * 2880)
 
 	def onemin_data_for_detector(self, detectorID):
 		'''
-		Returns a tuple (vol_list, occ_list) where vol_list is volume data at
-		1-minute increments and occ_list is occupancy data at 1-minute
+		Returns a tuple (vol_array, occ_array) where vol_array is volume data at
+		1-minute increments and occ_array is occupancy data at 1-minute
 		increments.
 
 		For each 1-minute interval, consider four values:
 			- vol(i), vol(i+1)
 			- occ(i), occ(i+1)
 
-		All four values must be valid (that is, != None). If any one of these
+		All four values must be valid (that is, != NAN). If any one of these
 		values is invalid, both volume and occupancy for time slot i is
 		reported as invalid.
 		'''
@@ -95,26 +96,27 @@ class TrafficReader:
 		volume30s = self.volumes_for_detector(detectorID)
 		occupancy30s = self.occupancies_for_detector(detectorID)
 
-		volume1m = deque()
-		occupancy1m = deque()
+		volume1m = empty([1440])
+		occupancy1m = empty([1440])
 
-		for i in range(0, len(volume30s), 2):
-			if (volume30s[i] == None
-				or volume30s[i+1] == None
-				or occupancy30s[i] == None
-				or occupancy30s[i+1] == None):
-				volume1m.append(None)
-				occupancy1m.append(None)
+		for i in range(1440):
+			j = i * 2
+			if (isnan(volume30s[j])
+				or isnan(volume30s[j+1])
+				or isnan(occupancy30s[j])
+				or isnan(occupancy30s[j+1])):
+				volume1m[i] = NAN
+				occupancy1m[i] = NAN
 			else:
-				volume1m.append(volume30s[i] + volume30s[i+1])
-				occupancy1m.append((occupancy30s[i] + occupancy30s[i+1]) / 2)
+				volume1m[i] = volume30s[j] + volume30s[j+1]
+				occupancy1m[i] = (occupancy30s[i] + occupancy30s[i+1]) / 2
 
-		return list(volume1m), list(occupancy1m)
+		return volume1m, occupancy1m
 
 	def onemin_speeds_for_detector(self, detectorID, speed_limit=70,
 								   field_length=None):
 		'''
-		Returns a list of 1-minute speeds, one for each minute of the day,
+		Returns a numpy.array of 1-minute speeds, one for each minute of the day,
 		starting at 00:00.
 		'''
 
@@ -186,24 +188,23 @@ class TrafficReader:
 		speed limit, returns overall average effective field length of the detector.
 		'''
 
-		lengths = deque()
-		valid_lengths = deque()
+		print volumes
+		print occupancies
+		lengths = empty([len(volumes)])
 
-		for i in range(len(volumes)):
-			if 0 < occupancies[i] <= 0.1 and volumes[i] != None and volumes[i] != 0:
-				length = (speed_limit * occupancies[i] * 5280) / (volumes[i] * 60)
-				lengths.append(length)
-				valid_lengths.append(length)
-			else:
-				lengths.append(None)
+		valid = (0 < occupancies) & (occupancies <= 0.1) & (volumes != 0) & ~isnan(volumes)
+		print valid
+
+		lengths[valid] = (speed_limit * occupancies[valid] * 5280) / (volumes[valid] * 60)
+		lengths[~valid] = NAN
 
 		# if there are no valid lengths, return average length of None.
-		if len(valid_lengths) != 0:
-			average_length = sum(valid_lengths) / len(valid_lengths)
+		if count_nonzero(valid) > 0:
+			average_length = nansum(lengths) / count_nonzero(valid)
 		else:
-			average_length = None
+			average_length = NAN
 
-		return average_length, list(lengths)
+		return average_length, lengths
 
 	def free_flow_speed(self, volumes, occupancies, field_length):
 		'''
@@ -252,3 +253,10 @@ class TrafficReader:
 				avgspeedlist.append(avgspeed)
 
 		print "Overall average: " + str(sum(avgspeedlist) / len(avgspeedlist))
+
+if __name__ == '__main__':
+	tr = TrafficReader('test/20100113.traffic')
+	vols, occs = tr.onemin_data_for_detector(1234)
+	avg, lengths = tr.field_lengths(vols, occs)
+	print avg
+	print lengths
