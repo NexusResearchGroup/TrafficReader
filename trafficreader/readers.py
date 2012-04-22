@@ -46,3 +46,8 @@ def list_occupancies(occupancyfile):
 			occ_list[i] = occ_list[i] / 1800
 
 	return occ_list
+if __name__ == '__main__':
+	occ_file = open('test/1234.c30')
+	vol_file = open('test/1234.v30')
+	print list_volumes(vol_file)
+	print list_occupancies(occ_file)
