@@ -1,26 +1,28 @@
 from __future__ import division
+from numpy import *
 import struct
 
 def list_volumes(volumefile):
 	'''
-	Reads the binary volume counts from volumefile and returns them as a list.
+	Reads the binary volume counts from volumefile and returns them as a
+	1-dimensional numpy.array.
 	'''
 
 	# interpret the file as a sequence of 2880 signed chars (single bytes)
 	format = 'b' * 2880
 
 	try:
-		vol_list = list(struct.unpack(format, volumefile.read()))
+		vol_array = array(struct.unpack(format, volumefile.read()), dtype=float)
 	# catch files with invalid lengths
 	except struct.error:
-		vol_list = [-1] * 2880
+		vol_array = array([NAN] * 2880)
+		return vol_array
 
 	# Valid sample ranges for volumes are 0 - 40. If outside this range, set to
-	# None to indicate bad data.
-	for i in range(len(vol_list)):
-		if vol_list[i] < 0 or vol_list[i] > 40:
-			vol_list[i] = None
-	return vol_list
+	# NAN to indicate bad data.
+	bad_mask = (vol_array < 0) | (vol_array > 40)
+	vol_array[bad_mask] = NAN
+	return vol_array
 
 def list_occupancies(occupancyfile):
 	'''
@@ -33,19 +35,17 @@ def list_occupancies(occupancyfile):
 	format = '>' + ('h' * 2880)
 
 	try:
-		occ_list = list(struct.unpack(format, occupancyfile.read()))
+		occ_array = array(struct.unpack(format, occupancyfile.read()), dtype=float)
 	except struct.error:
-		occ_list = [-1] * 2880
+		occ_array = array([NAN] * 2880)
+		return vol_array
 
 	# Valid sample ranges for occupancies are 0 - 1800. If outside this range,
 	# set to None to indicate bad data. Return valid data as a ratio of 1800.
-	for i in range(len(occ_list)):
-		if occ_list[i] < 0 or occ_list[i] > 1800:
-			occ_list[i] = None
-		else:
-			occ_list[i] = occ_list[i] / 1800
+	bad_mask = (occ_array < 0) | (occ_array > 1800)
+	occ_array[bad_mask] = NAN
+	return occ_array
 
-	return occ_list
 if __name__ == '__main__':
 	occ_file = open('test/1234.c30')
 	vol_file = open('test/1234.v30')
