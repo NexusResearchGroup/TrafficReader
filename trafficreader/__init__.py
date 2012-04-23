@@ -109,7 +109,7 @@ class TrafficReader:
 				occupancy1m[i] = NAN
 			else:
 				volume1m[i] = volume30s[j] + volume30s[j+1]
-				occupancy1m[i] = (occupancy30s[i] + occupancy30s[i+1]) / 2
+				occupancy1m[i] = (occupancy30s[j] + occupancy30s[j+1]) / 2
 
 		return volume1m, occupancy1m
 
@@ -130,7 +130,7 @@ class TrafficReader:
 		else:
 		# if we were given a field length, use it
 			avg_field_length = field_length
-			field_lengths = [field_length] * 1440
+			field_lengths = array([field_length] * 1440, dtype=float)
 
 		if avg_field_length == None:
 		# if we were not given a field length and we are unable to calculate it,
@@ -141,26 +141,47 @@ class TrafficReader:
 		# and field length
 			free_flow_speed = self.free_flow_speed(vols, occs, avg_field_length)
 
-		speeds = deque()
+		# if the free-flow speed is still None, use the speed limit anyway
+		if free_flow_speed == None:
+			free_flow_speed = speed_limit
+
+		speeds = empty([1440], dtype=float)
+		speeds[:] = NAN
 
 		# given in published report
 		theta = 0.15
 
-		for i in range(len(occs)):
-			if (occs[i] == None
-				or free_flow_speed == None
-				or avg_field_length == None
-				or field_lengths[i] == None):
-				speeds.append(None)
-			elif 0 < occs[i] < 0.1:
-				speeds.append(free_flow_speed * (1 - ( (occs[i] * avg_field_length) / field_lengths[i]) ) )
-			elif 0.1 <= occs[i] <= 0.15:
-				speeds.append(free_flow_speed * (1 - occs[i]) )
-			else:
-				exponent = -1 * (1 / theta) * ((100 * occs[i]) / (100 - theta))
-				speeds.append(free_flow_speed * (1 - theta) * exp(exponent) )
+		# Three cases for speed calculation:
+		# Case 1: 0 < occupancy < 0.1
+		valid = (0 < occs) & (occs <= 0.1)
+		if count_nonzero(valid) > 0:
+			speeds[valid] = free_flow_speed * (1 - ( (occs[valid] * avg_field_length) / field_lengths[valid]) )
 
-		return list(speeds)
+		# Case 2: 0.1 <= occupancy <= 0.15
+		valid = (0.1 < occs) & (occs <= 0.15)
+		if count_nonzero(valid) > 0:
+			speeds[valid] = free_flow_speed * (1 - occs[valid])
+
+		# Case 3: 0.15 < occupancy
+		valid = (0.15 < occs)
+		if count_nonzero(valid) > 0:
+			speeds[valid] = free_flow_speed * (1 - theta) * exp(-1 * (1 / theta) * ( (100 * occs[valid]) / (100 - theta) ))
+
+		#for i in range(len(occs)):
+		#	if (occs[i] == None
+		#		or free_flow_speed == None
+		#		or avg_field_length == None
+		#		or field_lengths[i] == None):
+		#		speeds.append(None)
+		#	elif 0 < occs[i] < 0.1:
+		#		speeds.append(free_flow_speed * (1 - ( (occs[i] * avg_field_length) / field_lengths[i]) ) )
+		#	elif 0.1 <= occs[i] <= 0.15:
+		#		speeds.append(free_flow_speed * (1 - occs[i]) )
+		#	else:
+		#		exponent = -1 * (1 / theta) * ((100 * occs[i]) / (100 - theta))
+		#		speeds.append(free_flow_speed * (1 - theta) * exp(exponent) )
+
+		return speeds
 
 	def fivemin_speeds_for_detector(self, detectorID, speed_limit=70):
 		'''
@@ -188,12 +209,9 @@ class TrafficReader:
 		speed limit, returns overall average effective field length of the detector.
 		'''
 
-		print volumes
-		print occupancies
 		lengths = empty([len(volumes)])
 
 		valid = (0 < occupancies) & (occupancies <= 0.1) & (volumes != 0) & ~isnan(volumes)
-		print valid
 
 		lengths[valid] = (speed_limit * occupancies[valid] * 5280) / (volumes[valid] * 60)
 		lengths[~valid] = NAN
@@ -202,7 +220,7 @@ class TrafficReader:
 		if count_nonzero(valid) > 0:
 			average_length = nansum(lengths) / count_nonzero(valid)
 		else:
-			average_length = NAN
+			average_length = None
 
 		return average_length, lengths
 
@@ -216,20 +234,33 @@ class TrafficReader:
 		max_occupancy = 0.98
 		max_density = (max_occupancy * 5280) / field_length
 
-		valid_volumes = deque()
-		valid_densities = deque()
+		densities = empty([len(volumes)])
 
-		for i in range(len(occupancies)):
-			if 0 < occupancies[i] < 0.1 and volumes[i] > 0:
-				density = (occupancies[i] * 5280) / field_length
-				valid_densities.append(density - ((density ** 2) / max_density))
-				valid_volumes.append(volumes[i])
+		valid = (0 < occupancies) & (occupancies < 0.1) & (volumes > 0)
 
-		# if there are not valid volumes or densities, return ffs of None
-		if sum(valid_volumes) == 0 or sum(valid_densities) == 0:
+		# if there are no valid data, return ffs of None
+		if count_nonzero(valid) == 0:
 			return None
 
-		return (60 * sum(valid_volumes)) / sum(valid_densities)
+		vol_sum = sum(volumes[valid])
+		occ_sum = sum(occupancies[valid])
+
+		densities[valid] = ( (occupancies[valid] * 5280 / field_length)
+							 - ( ((occupancies[valid] * 5280 / field_length) ** 2) / max_density) )
+
+		return (60 * sum(volumes[valid])) / sum(densities[valid])
+
+		#for i in range(len(occupancies)):
+		#	if 0 < occupancies[i] < 0.1 and volumes[i] > 0:
+		#		density = (occupancies[i] * 5280) / field_length
+		#		valid_densities.append(density - ((density ** 2) / max_density))
+		#		valid_volumes.append(volumes[i])
+
+		# if there are not valid volumes or densities, return ffs of None
+		#if sum(valid_volumes) == 0 or sum(valid_densities) == 0:
+		#	return None
+
+		#return (60 * sum(valid_volumes)) / sum(valid_densities)
 
 	def print_average_speeds_for_detectors(self, start=0, end=7000):
 		avgspeedlist = []
@@ -255,8 +286,6 @@ class TrafficReader:
 		print "Overall average: " + str(sum(avgspeedlist) / len(avgspeedlist))
 
 if __name__ == '__main__':
+	set_printoptions(precision=3, threshold='nan', edgeitems=10)
 	tr = TrafficReader('test/20100113.traffic')
-	vols, occs = tr.onemin_data_for_detector(1234)
-	avg, lengths = tr.field_lengths(vols, occs)
-	print avg
-	print lengths
+	print tr.onemin_speeds_for_detector(1585, speed_limit=60)
