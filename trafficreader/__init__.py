@@ -120,6 +120,8 @@ class TrafficReader:
 		starting at 00:00.
 		'''
 
+		#print "            Calculating speeds for detector ", detectorID
+
 		vols, occs = self.onemin_data_for_detector(detectorID)
 
 		if field_length == None:
@@ -256,7 +258,7 @@ class TrafficReader:
 		#		valid_densities.append(density - ((density ** 2) / max_density))
 		#		valid_volumes.append(volumes[i])
 
-		# if there are not valid volumes or densities, return ffs of None
+		# if there are not valid volumes or densities, return ffs o None
 		#if sum(valid_volumes) == 0 or sum(valid_densities) == 0:
 		#	return None
 
