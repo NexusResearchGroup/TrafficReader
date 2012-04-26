@@ -38,7 +38,7 @@ def list_occupancies(occupancyfile):
 		occ_array = array(struct.unpack(format, occupancyfile.read()), dtype=float)
 	except struct.error:
 		occ_array = array([NAN] * 2880)
-		return vol_array
+		return occ_array
 
 	# Valid sample ranges for occupancies are 0 - 1800. If outside this range,
 	# set to None to indicate bad data. Return valid data as a ratio of 1800.
