@@ -136,8 +136,10 @@ class TrafficReader:
 
 		if avg_field_length == None:
 		# if we were not given a field length and we are unable to calculate it,
-		# use the speed limit as the free-flow speed
+		# use the speed limit as the free-flow speed and assume an average field
+		# length of 25 ft.
 			free_flow_speed = speed_limit
+			avg_field_length = 25
 		else:
 		# otherwise, calculate the free-flow speed from the volume, occupancy,
 		# and field length
