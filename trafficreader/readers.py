@@ -41,7 +41,7 @@ def list_occupancies(occupancyfile):
 		return occ_array
 
 	# Valid sample ranges for occupancies are 0 - 1800. If outside this range,
-	# set to None to indicate bad data. Return valid data as a ratio of 1800.
+	# set to NAN to indicate bad data. Return valid data as a ratio of 1800.
 	bad_mask = (occ_array < 0) | (occ_array > 1800)
 	occ_array[bad_mask] = NAN
 	return occ_array / 1800

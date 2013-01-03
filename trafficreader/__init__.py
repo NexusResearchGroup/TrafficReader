@@ -79,6 +79,31 @@ class TrafficReader:
             return list_volumes(vol_file)
         except KeyError:
             return array([NAN] * 2880)
+    
+    def speeds_for_detector(self, detectorID, field_length=7.62):
+        '''
+        Returns a numpy.array of the 30-second speed (km/h) values recorded in this
+        .traffic file for the detector with the specified ID. Field length, specified
+        in meters, defaults to 7.62 but this default value will provide inaccurate speeds
+        for many detectors. Field length estimates can be read from metro_config.xml. 
+        '''
+        
+        occs = self.occupancies_for_detector(detectorID)
+        vols = self.volumes_for_detector(detectorID)
+        
+        # initialize speed array to all NANs
+        speeds = empty([2880], dtype=float)
+        speeds[:] = NAN
+        
+        valid = (   (0 < occs)
+                    & (occs < 1)
+                    & (0 < vols)
+                    & (vols< 30) )
+        
+        speeds[valid] = (   (vols[valid] * 120)
+                            / (occs[valid] * 1000 / field_length) )
+        
+        return speeds;
 
     def onemin_data_for_detector(self, detectorID):
         '''
