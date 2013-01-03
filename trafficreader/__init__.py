@@ -80,7 +80,7 @@ class TrafficReader:
         except KeyError:
             return array([NAN] * 2880)
     
-    def speeds_for_detector(self, detectorID, field_length=7.62):
+    def speeds_for_detector(self, detectorID, field_length=6.7056):
         '''
         Returns a numpy.array of the 30-second speed (km/h) values recorded in this
         .traffic file for the detector with the specified ID. Field length, specified
